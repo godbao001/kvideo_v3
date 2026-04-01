@@ -1,0 +1,51 @@
+name: 🐛 错误报告 (Bug Report)
+description: 创建一个报告以帮助我们改进 KVideo
+title: "[Bug]: "
+labels: ["bug", "triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        感谢您花时间填写此错误报告！
+  - type: checkboxes
+    id: duplicates
+    attributes:
+      label: 重复检查
+      description: 请确保您已搜索过现有的 Issue，以避免重复报告。
+      options:
+        - label: 我已搜索过现有的 Issue，没有发现类似的问题。
+          required: true
+  - type: textarea
+    id: description
+    attributes:
+      label: 问题描述
+      description: 请清晰简洁地描述发生了什么问题。
+      placeholder: 比如：点击播放按钮时，播放器没有反应...
+    validations:
+      required: true
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: 复现步骤
+      description: 请提供复现该问题的步骤。
+      placeholder: |
+        1. 打开首页
+        2. 搜索 "Matrix"
+        3. 点击第一个结果
+        4. ...
+    validations:
+      required: true
+  - type: input
+    id: environment
+    attributes:
+      label: 环境信息
+      description: 请提供您的浏览器版本、操作系统等信息。
+      placeholder: Chrome 120, macOS 14.2
+    validations:
+      required: true
+  - type: textarea
+    id: logs
+    attributes:
+      label: 相关日志
+      description: 如果有控制台报错或服务器日志，请粘贴在这里。
+      render: shell

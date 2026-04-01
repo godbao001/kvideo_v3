@@ -1,0 +1,45 @@
+name: 🚀 功能请求 (Feature Request)
+description: 建议一个新功能或改进
+title: "[Feat]: "
+labels: ["enhancement", "triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        感谢您建议新功能！
+  - type: checkboxes
+    id: duplicates
+    attributes:
+      label: 重复检查
+      description: 请确保您已搜索过现有的 Issue，以避免重复建议。
+      options:
+        - label: 我已搜索过现有的 Issue，没有发现类似的建议。
+          required: true
+  - type: textarea
+    id: problem
+    attributes:
+      label: 问题描述
+      description: 这个功能是为了解决什么问题？
+      placeholder: 比如：我总是很难找到我上次看到的视频...
+    validations:
+      required: true
+  - type: textarea
+    id: solution
+    attributes:
+      label: 建议的解决方案
+      description: 您希望如何解决这个问题？
+      placeholder: 比如：添加一个"观看历史"的侧边栏...
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: 替代方案
+      description: 您是否考虑过其他替代方案？
+    validations:
+      required: false
+  - type: textarea
+    id: context
+    attributes:
+      label: 其他上下文
+      description: 任何其他有助于理解该功能的截图或上下文。
