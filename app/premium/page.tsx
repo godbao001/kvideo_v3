@@ -36,7 +36,7 @@ function PremiumHomePage() {
             }}>
                 <SearchForm
                     onSearch={handleSearch}
-                    onClear={handleReset}
+                    onClear={handleCancelSearch}
                     onCancelSearch={handleCancelSearch}
                     isLoading={loading}
                     initialQuery={query}
@@ -50,6 +50,13 @@ function PremiumHomePage() {
 
             {/* Main Content */}
             <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-20">
+                {/* Premium Content - Trending and Latest */}
+                {!loading && !hasSearched && (
+                    <>
+                        <PremiumContent onSearch={handleSearch} />
+                    </>
+                )}
+
                 {/* Results Section */}
                 {(results.length >= 1 || (!loading && results.length > 0)) && (
                     <SearchResults
@@ -57,19 +64,13 @@ function PremiumHomePage() {
                         availableSources={availableSources}
                         loading={loading}
                         isPremium={true}
+                        onCancelSearch={handleCancelSearch}
                     />
                 )}
 
                 {/* No Results */}
                 {!loading && hasSearched && results.length === 0 && (
                     <NoResults onReset={handleReset} />
-                )}
-
-                {/* Premium Content - Trending and Latest */}
-                {!loading && !hasSearched && (
-                    <>
-                        <PremiumContent onSearch={handleSearch} />
-                    </>
                 )}
             </main>
 

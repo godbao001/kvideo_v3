@@ -134,6 +134,16 @@ export function usePremiumHomePage() {
         router.replace('/premium', { scroll: false });
     };
 
+    // Handle cancel search - resets to the browse view (PremiumContent).
+    // Sets window flag so PopularFeatures-like components know to restore tag view.
+    const handleCancelSearch = useCallback(() => {
+        window._kvideo_cancel_search = true;
+        resetSearch();
+        setHasSearched(false);
+        setQuery('');
+        router.replace('/premium', { scroll: false });
+    }, [resetSearch, router]);
+
     return {
         query,
         hasSearched,
@@ -144,7 +154,7 @@ export function usePremiumHomePage() {
         totalSources,
         handleSearch,
         handleReset,
-        handleCancelSearch: cancelSearch,
+        handleCancelSearch,
         loadMore,
         hasMore,
         loadingMore,

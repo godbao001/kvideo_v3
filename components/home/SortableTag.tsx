@@ -51,10 +51,10 @@ export function SortableTag({
         >
             <div className={`${showTagManager && !isDragging ? 'animate-jiggle' : ''}`}>
                 <button
-                    onClick={() => onTagSelect(tag.id)}
+                    onClick={() => onTagSelect(tag.value)}
                     className={`
             px-6 py-2.5 text-sm font-semibold transition-all whitespace-nowrap rounded-[var(--radius-full)] cursor-pointer select-none
-            ${selectedTag === tag.id
+            ${selectedTag === tag.value
                             ? 'bg-[var(--accent-color)] text-white shadow-md scale-105'
                             : 'bg-[var(--glass-bg)] backdrop-blur-xl text-[var(--text-color)] border border-[var(--glass-border)] hover:border-[var(--accent-color)] hover:scale-105'
                         }

@@ -6,7 +6,7 @@
 
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { TagManager } from './TagManager';
 import { MovieGrid } from './MovieGrid';
 import { useTagManager } from './hooks/useTagManager';
@@ -17,8 +17,7 @@ interface PopularFeaturesProps {
   onSearch?: (query: string) => void;
 }
 
-export function PopularFeatures({ onSearch }: PopularFeaturesProps) {
-  const {
+export function PopularFeatures({ onSearch }: PopularFeaturesProps) {  const {
     tags,
     selectedTag,
     contentType,
@@ -46,17 +45,33 @@ export function PopularFeatures({ onSearch }: PopularFeaturesProps) {
     loadMoreRef: recommendLoadMoreRef,
   } = usePersonalizedRecommendations(false);
 
-  // Track whether the recommendation tab is active
-  const [isRecommendSelected, setIsRecommendSelected] = useState(hasHistory);
+  // isRecommendSelected: controls whether to show tag list or "为你推荐".
+  // Strategy: the INITIAL value of isRecommendSelected is determined ONCE on first render.
+  // After first render, state only changes via user actions (no auto-enable from hasHistory).
+  //
+  // - Fresh visit with history (no cancel flag) → show "为你推荐" (initial = true)
+  // - Cancel → restore flow                   → show tag view    (initial = false)
+  // - Subsequent Zustand changes              → ignore (handled via user actions only)
+  const _isFirstRenderRef = useRef(true);
+  // Read cancel flag: ONLY set by handleCancelSearch (search cancel).
+  // NOT set when returning from video detail page.
+  const _cancelFlag = (window as any)._kvideo_cancel_search;
+  const _shouldShowTagView = _cancelFlag === true;
+  console.log('[PopularFeatures] _shouldShowTagView:', _shouldShowTagView, '| hasHistory:', hasHistory);
 
-  // Sync selection when hasHistory changes after Zustand hydration from localStorage.
-  // On first render the store is empty (hasHistory=false), so useState captures false.
-  // Once hydration completes and hasHistory becomes true, auto-select the recommendation tab.
-  useEffect(() => {
-    if (hasHistory) {
-      setIsRecommendSelected(true);
-    }
-  }, [hasHistory]);
+  // Determine initial state value during first render.
+  // The initializer reads the window flag and decides: show "为你推荐" or tag view.
+  const [isRecommendSelected, setIsRecommendSelected] = useState(() => {
+    if (!_isFirstRenderRef.current) return false; // not first render — use cached
+    return !_shouldShowTagView && hasHistory; // first render: fresh visit → "为你推荐"
+  });
+
+  // After first render, mark ref as false — never changes again.
+  if (_isFirstRenderRef.current) {
+    _isFirstRenderRef.current = false;
+    // Clean up the cancel flag after reading it.
+    delete (window as any)._kvideo_cancel_search;
+  }
 
   const effectiveRecommendSelected = hasHistory && isRecommendSelected;
 
@@ -72,7 +87,15 @@ export function PopularFeatures({ onSearch }: PopularFeaturesProps) {
     contentType
   );
 
+  console.log('[PopularFeatures] selectedTag:', selectedTag, '| isRecommendSelected:', isRecommendSelected, '| effectiveRecommendSelected:', effectiveRecommendSelected, '| movies count:', movies.length);
+
   const handleMovieClick = (movie: any) => {
+    // Save tag's ID (not display value) so UI tag selection can match by id.
+    // The display value is resolved in loadMovies via tags lookup.
+    const tagToSave = selectedTag;
+    console.log('[handleMovieClick] saving tag ID:', tagToSave);
+    window._kvideo_tag_to_restore = tagToSave;
+
     if (onSearch) {
       onSearch(movie.title);
     }
@@ -83,7 +106,9 @@ export function PopularFeatures({ onSearch }: PopularFeaturesProps) {
   };
 
   const handleRegularTagSelect = (tagId: string) => {
-    if (tagId === 'custom_高级' || tags.find(t => t.id === tagId)?.label === '高级') {
+    // tagId is now the tag value (e.g., '欧美'), not the id (e.g., 'tag_欧美').
+    // Use t.value for lookup since that's what we now store in selectedTag.
+    if (tagId === 'custom_高级' || tags.find(t => t.value === tagId)?.label === '高级') {
       window.location.href = '/premium';
       return;
     }

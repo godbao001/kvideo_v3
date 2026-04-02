@@ -149,8 +149,19 @@ export function useHomePage() {
 
 
     const handleCancelSearch = useCallback(() => {
-        cancelSearch();
-    }, [cancelSearch]);
+        console.log('[handleCancelSearch] called, setting _kvideo_cancel_search = true');
+        // Tell PopularFeatures to show tag view (not "为你推荐") on the upcoming remount.
+        // Separate from _kvideo_tag_to_restore so useTagManager's useLayoutEffect
+        // (which runs first and deletes _kvideo_tag_to_restore) doesn't clear this flag.
+        window._kvideo_cancel_search = true;
+
+        // Fully reset search state (aborts fetch + clears all result state)
+        // The selectedTag is restored via window global in useTagManager
+        resetSearch();
+        setHasSearched(false);
+        setQuery('');
+        router.replace('/', { scroll: false });
+    }, [resetSearch, setQuery, router]);
 
     const handleReset = useCallback(() => {
         setHasSearched(false);

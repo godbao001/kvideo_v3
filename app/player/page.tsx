@@ -4,6 +4,7 @@ import { Suspense, useEffect, useMemo, useState, useCallback, useRef } from 'rea
 import { useSearchParams, useRouter } from 'next/navigation';
 import { VideoPlayer } from '@/components/player/VideoPlayer';
 import { VideoMetadata } from '@/components/player/VideoMetadata';
+import { BtInfoPanel } from '@/components/player/BtInfoPanel';
 import { EpisodeList } from '@/components/player/EpisodeList';
 import { PlayerError } from '@/components/player/PlayerError';
 import { SourceInfo } from '@/components/player/EpisodeList';
@@ -436,6 +437,11 @@ function PlayerContent() {
                   source={source}
                   title={title}
                 />
+              </div>
+
+              {/* BT Info Panel - search btbtla.com for this video */}
+              <div className="hidden lg:block mt-4">
+                <BtInfoPanel videoTitle={videoData?.vod_name || title || ''} />
               </div>
 
               {/* Favorite Button for current video */}

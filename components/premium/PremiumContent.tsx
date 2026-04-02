@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { TagManager } from '@/components/home/TagManager';
 import { MovieGrid } from '@/components/home/MovieGrid';
 import { PremiumContentGrid } from './PremiumContentGrid';
@@ -38,19 +38,30 @@ export function PremiumContent({ onSearch }: PremiumContentProps) {
         loadMoreRef: recommendLoadMoreRef,
     } = usePersonalizedRecommendations(true);
 
-    // Track whether the recommendation tab is active
-    const [isRecommendSelected, setIsRecommendSelected] = useState(hasHistory);
+    // Track whether the recommendation tab is active.
+    // Strategy: the INITIAL value of isRecommendSelected is determined ONCE on first render.
+    // - Fresh visit with history (no cancel flag) → show "为你推荐" (initial = true)
+    // - Cancel → restore flow                   → show tag view    (initial = false)
+    // - Subsequent Zustand changes              → ignore (handled via user actions only)
+    const _isFirstRenderRef = useRef(true);
+    // Read cancel flag: ONLY set by handleCancelSearch (search cancel).
+    // NOT set when returning from video detail page.
+    const _shouldShowTagView = (window as any)._kvideo_cancel_search === true;
 
-    useEffect(() => {
-        if (hasHistory) {
-            setIsRecommendSelected(true);
-        }
-    }, [hasHistory]);
+    const [isRecommendSelected, setIsRecommendSelected] = useState(() => {
+        if (!_isFirstRenderRef.current) return false;
+        return !_shouldShowTagView && hasHistory;
+    });
+
+    if (_isFirstRenderRef.current) {
+        _isFirstRenderRef.current = false;
+        delete (window as any)._kvideo_cancel_search;
+    }
 
     const effectiveRecommendSelected = hasHistory && isRecommendSelected;
 
     // Get the category value from selected tag
-    const categoryValue = tags.find(t => t.id === selectedTag)?.value || '';
+    const categoryValue = tags.find(t => t.value === selectedTag)?.value || '';
 
     const {
         videos,
@@ -61,6 +72,10 @@ export function PremiumContent({ onSearch }: PremiumContentProps) {
     } = usePremiumContent(effectiveRecommendSelected ? '' : categoryValue);
 
     const handleVideoClick = (video: any) => {
+        // Save current tag to window global so we can restore it after search cancel.
+        const tagToSave = effectiveRecommendSelected ? '' : selectedTag;
+        window._kvideo_tag_to_restore = tagToSave;
+
         if (onSearch) {
             onSearch(video.vod_name || video.title);
         }

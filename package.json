@@ -15,6 +15,7 @@
     "@dnd-kit/utilities": "^3.2.2",
     "@upstash/redis": "^1.37.0",
     "@vercel/analytics": "^2.0.1",
+    "cheerio": "^1.2.0",
     "hls.js": "^1.6.15",
     "lucide-react": "^0.577.0",
     "next": "16.1.7",
@@ -26,6 +27,7 @@
   "devDependencies": {
     "@cloudflare/next-on-pages": "^1.13.16",
     "@tailwindcss/postcss": "^4",
+    "@types/cheerio": "^0.22.35",
     "@types/node": "^25",
     "@types/react": "^19",
     "@types/react-dom": "^19",

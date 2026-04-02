@@ -4,7 +4,7 @@
  * IPTV Page - Live TV channel viewer with M3U source management
  */
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { useIPTVStore } from '@/lib/store/iptv-store';
 import { IPTVSourceManager } from '@/components/iptv/IPTVSourceManager';
 import { IPTVChannelGrid } from '@/components/iptv/IPTVChannelGrid';
@@ -59,12 +59,18 @@ export default function IPTVPage() {
     );
   }
 
+  // Guard against concurrent refresh calls
+  const refreshLockRef = useRef(false);
+
   // Auto-refresh on first load if we have sources but no cached channels
   useEffect(() => {
-    if (sources.length > 0 && cachedChannels.length === 0 && !isLoading) {
-      refreshSources();
+    if (sources.length > 0 && cachedChannels.length === 0 && !isLoading && !refreshLockRef.current) {
+      refreshLockRef.current = true;
+      refreshSources().finally(() => {
+        refreshLockRef.current = false;
+      });
     }
-  }, [sources.length, cachedChannels.length, isLoading, refreshSources]);
+  }, [sources.length, cachedChannels.length, isLoading]);
 
   return (
       <div className="min-h-screen bg-[var(--bg-color)] bg-[image:var(--bg-image)] bg-fixed">

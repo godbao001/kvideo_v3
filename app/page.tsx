@@ -48,7 +48,7 @@ function HomePage() {
       }}>
         <SearchForm
           onSearch={handleSearch}
-          onClear={handleReset}
+          onClear={handleCancelSearch}
           onCancelSearch={handleCancelSearch}
           isLoading={loading}
           initialQuery={query}
@@ -67,6 +67,7 @@ function HomePage() {
             availableSources={availableSources}
             loading={loading}
             latencies={latencies}
+            onCancelSearch={handleCancelSearch}
           />
         )}
 

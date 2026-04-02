@@ -128,17 +128,26 @@ export const VideoGrid = memo(function VideoGrid({
     }
   }, []);
 
-  // Memoize the click handler
+  // Memoize the click handler - always open player in a new tab.
+  // The mobile tap-to-select logic is preserved (first tap selects, second tap opens),
+  // but both mobile and desktop open in a new tab via window.open.
   const handleCardClick = useCallback((e: React.MouseEvent, videoId: string, videoUrl: string) => {
+    e.preventDefault();
+
     const isMobile = window.innerWidth < 1024;
 
     if (isMobile) {
       if (activeCardId === videoId) {
-        window.location.href = videoUrl;
+        // Second tap: open in new tab
+        window.open(videoUrl, '_blank');
+        setActiveCardId(null);
       } else {
-        e.preventDefault();
+        // First tap: select the card
         setActiveCardId(videoId);
       }
+    } else {
+      // Desktop: open in new tab directly
+      window.open(videoUrl, '_blank');
     }
   }, [activeCardId]);
 

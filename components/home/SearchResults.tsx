@@ -15,6 +15,7 @@ interface SearchResultsProps {
     loading: boolean;
     isPremium?: boolean;
     latencies?: Record<string, number>;
+    onCancelSearch?: () => void;
 }
 
 export function SearchResults({
@@ -23,6 +24,7 @@ export function SearchResults({
     loading,
     isPremium = false,
     latencies = {},
+    onCancelSearch,
 }: SearchResultsProps) {
     // Source badges hook - filters by video source
     const {
@@ -53,6 +55,19 @@ export function SearchResults({
 
     return (
         <div className="animate-fade-in">
+            {/* Back to category button - appears after search results are shown */}
+            {!loading && onCancelSearch && (
+                <button
+                    onClick={onCancelSearch}
+                    className="mb-4 flex items-center gap-2 px-4 py-2 rounded-full bg-[var(--glass-bg)] border border-[var(--glass-border)] text-[var(--text-color-secondary)] hover:text-[var(--text-color)] hover:border-[var(--accent-color)]/30 transition-all text-sm cursor-pointer"
+                >
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                        <path d="M19 12H5M12 19l-7-7 7-7"/>
+                    </svg>
+                    返回分类
+                </button>
+            )}
+
             <ResultsHeader
                 loading={loading}
                 resultsCount={results.length}

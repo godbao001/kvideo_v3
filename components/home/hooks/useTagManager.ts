@@ -1,10 +1,20 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useLayoutEffect } from 'react';
 import { DragEndEvent } from '@dnd-kit/core';
 import { arrayMove } from '@dnd-kit/sortable';
 
 const DEFAULT_TAG = { id: 'popular', label: '热门', value: '热门' };
 
 const STORAGE_KEY_PREFIX = 'kvideo_custom_tags_';
+const SESSION_TAG_KEY = 'kvideo_last_tag';
+
+// Global window key for cross-component tag restoration.
+// sessionStorage works for same-origin navigations but gets lost in some Next.js router
+// flows; a window global survives StrictMode unmount/remount cycles.
+declare global {
+    interface Window {
+        _kvideo_tag_to_restore?: string;
+    }
+}
 
 export function useTagManager() {
     const [contentType, setContentType] = useState<'movie' | 'tv'>(() => {
@@ -12,7 +22,45 @@ export function useTagManager() {
         const saved = localStorage.getItem('kvideo_default_content_type');
         return saved === 'tv' ? 'tv' : 'movie';
     });
-    const [selectedTag, setSelectedTag] = useState(DEFAULT_TAG.value);
+
+    // Initializer strategy for StrictMode safety:
+    // 1. First init call: read window._kvideo_tag_to_restore, delete it, save to _kvideo_tag_session,
+    //    set _kvideo_tag_restored = true. Return the tag value.
+    // 2. StrictMode remount init call: window._kvideo_tag_to_restore is gone (deleted in step 1),
+    //    but _kvideo_tag_session still has the value. Return it.
+    // 3. Normal page load (no window restore): both are absent, return DEFAULT.
+    const [selectedTag, setSelectedTag] = useState<string>(() => {
+        if (typeof window === 'undefined') return DEFAULT_TAG.value;
+
+        const winVal = (window as any)._kvideo_tag_to_restore;
+        if (winVal !== undefined) {
+            // First mount: found restore value in window. Delete it and cache in sessionStorage.
+            delete (window as any)._kvideo_tag_to_restore;
+            (window as any)._kvideo_tag_session = winVal;
+            (window as any)._kvideo_tag_restored = true;
+            console.log('[useTagManager init] restored from window:', winVal);
+            return winVal;
+        }
+
+        const ssVal = (window as any)._kvideo_tag_session;
+        if (ssVal !== undefined) {
+            // StrictMode remount: window was already cleared, but sessionStorage survives.
+            console.log('[useTagManager init] restored from session:', ssVal);
+            return ssVal;
+        }
+
+        console.log('[useTagManager init] no restore value, returning DEFAULT:', DEFAULT_TAG.value);
+        return DEFAULT_TAG.value;
+    });
+
+    // Effect: ensure sessionStorage is set if we restored from window.
+    // NO cleanup: sessionStorage survives same-origin navigation and is needed across
+    // StrictMode remounts (where cleanup runs BETWEEN the two mounts, not after).
+    useLayoutEffect(() => {
+        if ((window as any)._kvideo_tag_restored) {
+            try { sessionStorage.setItem('_kvideo_tag_session', selectedTag); } catch (_) { /* ignore */ }
+        }
+    }, []);
     const [tags, setTags] = useState<any[]>([]);
     const [isLoadingTags, setIsLoadingTags] = useState(false);
     const [newTagInput, setNewTagInput] = useState('');
@@ -57,8 +105,6 @@ export function useTagManager() {
                     }
 
                     setTags(mappedTags);
-                    // Also save to localStorage to avoid repeated fetches if desired
-                    // Actually, let's just keep them in memory for now unless they customize
                 } else {
                     setTags([DEFAULT_TAG]);
                 }
@@ -71,7 +117,7 @@ export function useTagManager() {
         };
 
         loadTags();
-        setSelectedTag(DEFAULT_TAG.value);
+        // Do NOT set selectedTag here — useInsertionEffect handles restoration before paint.
     }, [contentType, storageKey]);
 
     const saveTags = (newTags: any[]) => {

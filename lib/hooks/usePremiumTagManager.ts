@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useLayoutEffect } from 'react';
 import { Tag } from '@/components/home/SortableTag';
 import { DragEndEvent } from '@dnd-kit/core';
 import { arrayMove } from '@dnd-kit/sortable';
@@ -6,11 +6,39 @@ import { PREMIUM_STORAGE_KEY } from '@/lib/constants/premium-tags';
 
 export function usePremiumTagManager() {
     const [tags, setTags] = useState<Tag[]>([]);
-    const [selectedTag, setSelectedTag] = useState('recommend');
     const [showTagManager, setShowTagManager] = useState(false);
     const [newTagInput, setNewTagInput] = useState('');
     const [justAddedTag, setJustAddedTag] = useState(false);
     const [loading, setLoading] = useState(true);
+
+    // Restore tag from window global before first paint.
+    // Only clear _kvideo_tag_to_restore here; _kvideo_cancel_search is handled by PremiumContent.
+    //
+    // StrictMode-safe strategy: use window + sessionStorage as the source of truth.
+    // 1. First init: read _kvideo_tag_to_restore from window, cache to _kvideo_tag_session, return it.
+    // 2. StrictMode remount: window is gone but _kvideo_tag_session survives → return cached value.
+    // 3. Normal load: no window value → return 'recommend'.
+    const [selectedTag, setSelectedTag] = useState<string>(() => {
+        if (typeof window === 'undefined') return 'recommend';
+        const winVal = (window as any)._kvideo_tag_to_restore;
+        if (winVal !== undefined) {
+            delete (window as any)._kvideo_tag_to_restore;
+            (window as any)._kvideo_tag_session = winVal;
+            return winVal;
+        }
+        const ssVal = (window as any)._kvideo_tag_session;
+        if (ssVal !== undefined) return ssVal;
+        return 'recommend';
+    });
+
+    useLayoutEffect(() => {
+        const tag = (window as any)._kvideo_tag_to_restore;
+        if (tag) {
+            (window as any)._kvideo_tag_session = tag;
+            delete (window as any)._kvideo_tag_to_restore;
+            setSelectedTag(tag);
+        }
+    }, []);
 
     // Fetch tags from API
     useEffect(() => {

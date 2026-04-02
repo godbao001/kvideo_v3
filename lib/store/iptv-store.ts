@@ -188,11 +188,12 @@ export const useIPTVStore = create<IPTVStore>()(
       },
 
       refreshSources: async () => {
-        const { sources } = get();
+        const { sources, isLoading } = get();
         if (sources.length === 0) {
           set({ cachedChannels: [], cachedGroups: [], cachedChannelsBySource: {}, lastRefreshed: Date.now() });
           return;
         }
+        if (isLoading) return; // Guard: skip if already loading
 
         set({ isLoading: true });
 
