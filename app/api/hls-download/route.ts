@@ -66,7 +66,7 @@ export async function GET(request: NextRequest): Promise<Response> {
 
                 let stderr = '';
 
-                ffmpeg.stderr.on('data', (data: Buffer) => {
+                ffmpeg.stderr?.on('data', (data: Buffer) => {
                     const str = data.toString();
                     stderr += str;
 
@@ -277,7 +277,7 @@ export async function GET(request: NextRequest): Promise<Response> {
             resolve(res);
         };
 
-        ffmpeg.stderr.on('data', (d: Buffer) => { stderr += d.toString(); });
+        ffmpeg.stderr?.on('data', (d: Buffer) => { stderr += d.toString(); });
 
         ffmpeg.on('close', (code) => {
             if (code === 0 && fs.existsSync(outputPath)) {
