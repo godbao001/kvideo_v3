@@ -74,6 +74,16 @@ export function SourceSettings({
                     >
                         + 添加源
                     </button>
+                    <button
+                        onClick={() => {
+                            import('@/lib/utils/source-import-utils').then(({ exportSources }) => {
+                                exportSources(sources, { includeDisabled: true });
+                            });
+                        }}
+                        className="px-4 py-2 rounded-[var(--radius-2xl)] bg-[var(--glass-bg)] border border-[var(--glass-border)] text-[var(--text-color)] text-sm font-medium hover:bg-[color-mix(in_srgb,var(--accent-color)_10%,transparent)] transition-all duration-200 cursor-pointer"
+                    >
+                        导出
+                    </button>
                 </div>
             </div>
             <p className="text-sm text-[var(--text-color-secondary)] mb-6">

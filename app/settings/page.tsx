@@ -39,6 +39,7 @@ export default function SettingsPage() {
     handleSortChange,
     handleExport,
     handleImportFile,
+    handleImportVerified,
     handleImportLink,
     subscriptions,
     handleAddSubscription,
@@ -169,8 +170,9 @@ export default function SettingsPage() {
       <ImportModal
         isOpen={isImportModalOpen}
         onClose={() => setIsImportModalOpen(false)}
+        existingSources={sources}
         onImportFile={handleImportFile}
-        onImportLink={handleImportLink}
+        onImportVerified={handleImportVerified}
         subscriptions={subscriptions}
         onAddSubscription={handleAddSubscription}
         onRemoveSubscription={handleRemoveSubscription}

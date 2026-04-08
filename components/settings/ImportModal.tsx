@@ -7,16 +7,19 @@ import { LinkImportTab } from './import/LinkImportTab';
 import { SubscriptionImportTab } from './import/SubscriptionImportTab';
 import { JsonImportTab } from './import/JsonImportTab';
 import type { ImportResult } from '@/lib/utils/source-import-utils';
+import type { VideoSource } from '@/lib/types';
 import type { SourceSubscription } from '@/lib/types';
 import { ModalBackdrop } from '@/components/ui/ModalBackdrop';
 
 interface ImportModalProps {
   isOpen: boolean;
   onClose: () => void;
-  // File Import Handler
+  // Existing sources for dedup during import preview
+  existingSources: VideoSource[];
+  // File Import Handler - receives verified sources ready to merge
   onImportFile: (jsonString: string) => Promise<boolean> | boolean;
-  // Link Import Handler 
-  onImportLink: (result: ImportResult) => Promise<boolean> | boolean;
+  // Link Import Handler - receives verified sources ready to merge
+  onImportVerified: (sources: VideoSource[]) => Promise<boolean> | boolean;
   // Subscription Handlers
   subscriptions: SourceSubscription[];
   onAddSubscription: (sub: SourceSubscription) => Promise<boolean> | boolean;
@@ -27,8 +30,9 @@ interface ImportModalProps {
 export function ImportModal({
   isOpen,
   onClose,
+  existingSources,
   onImportFile,
-  onImportLink,
+  onImportVerified,
   subscriptions,
   onAddSubscription,
   onRemoveSubscription,
@@ -76,11 +80,11 @@ export function ImportModal({
 
           <div className="flex-1 min-h-0">
             {activeTab === 'file' && (
-              <FileImportTab onImport={onImportFile} />
+              <FileImportTab onImportVerified={onImportVerified} existingSources={existingSources} />
             )}
 
             {activeTab === 'link' && (
-              <LinkImportTab onImport={onImportLink} />
+              <LinkImportTab onImportVerified={onImportVerified} existingSources={existingSources} />
             )}
 
             {activeTab === 'subscription' && (

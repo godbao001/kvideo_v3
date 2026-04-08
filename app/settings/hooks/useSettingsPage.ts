@@ -128,6 +128,20 @@ export function useSettingsPage() {
         return false;
     };
 
+    /**
+     * Handle import of pre-verified & pre-filtered sources (from file or URL import with verification)
+     * Sources passed here are already verified OK and ready to merge into store.
+     */
+    const handleImportVerified = (sources: VideoSource[]): boolean => {
+        if (sources.length === 0) return false;
+        const currentSettings = settingsStore.getSettings();
+        const merged = mergeSources(currentSettings.sources, sources);
+        settingsStore.saveSettings({ ...currentSettings, sources: merged });
+        setSources(merged);
+        console.log(`[Import] Verified import: ${sources.length} sources merged`);
+        return true;
+    };
+
     const handleImportLink = (result: ImportResult, isSync: boolean = false): boolean => {
         try {
             // Merge normal sources
@@ -351,6 +365,7 @@ export function useSettingsPage() {
         handleSortChange,
         handleExport,
         handleImportFile,
+        handleImportVerified,
         handleImportLink,
         handleAddSubscription,
         handleRemoveSubscription,
