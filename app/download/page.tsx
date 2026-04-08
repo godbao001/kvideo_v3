@@ -271,10 +271,10 @@ function DownloadPage() {
                     </div>
 
                     {/* Download info */}
-                    {progress.downloadedSize != null && progress.downloadedSize > 0 && progress.totalSize > 0 && (
+                    {progress.downloadedSize != null && progress.downloadedSize > 0 && (progress.totalSize ?? 0) > 0 && (
                         <div className="mb-4 text-center">
                             <span className="text-xs text-gray-500">
-                                已下载 {formatBytes(progress.downloadedSize)} / 总计 {formatBytes(progress.totalSize)}
+                                已下载 {formatBytes(progress.downloadedSize as number)} / 总计 {formatBytes(progress.totalSize as number)}
                             </span>
                         </div>
                     )}
