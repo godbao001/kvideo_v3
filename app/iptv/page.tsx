@@ -70,7 +70,7 @@ export default function IPTVPage() {
   // Before detection starts, show all channels so user can see what to check
   const isDetecting = Object.keys(latencies).length > 0 || pendingCount > 0;
   const resolvedUrls = useMemo(() => {
-    if (!isDetecting) return null; // null = show all
+    if (!isDetecting) return undefined; // undefined = show all
     return new Set(Object.keys(latencies));
   }, [latencies, isDetecting]);
 

@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 
 interface BtDownloadLink {
+    filename?: string;
     label: string;
     size: string;
     magnet: string;
@@ -165,7 +166,7 @@ export function BtInfoPanel({ videoTitle }: BtInfoPanelProps) {
                         <p className="text-sm text-[var(--text-color-secondary)] py-2">未找到相关资源</p>
                     )}
 
-                    {data && data.results.length > 0 && (
+                    {data && data.results.length > 0 && firstResult && (
                         <div className="space-y-3 mt-2">
                             {/* Primary result */}
                             <div>
@@ -231,7 +232,7 @@ export function BtInfoPanel({ videoTitle }: BtInfoPanelProps) {
                                                             <div key={i} className="px-3 py-2 space-y-1">
                                                                 {/* Filename */}
                                                                 <div className="text-xs text-[var(--text-color)] leading-snug break-all line-clamp-2">
-                                                                    {dl.filename}
+                                                                    {dl.filename || dl.label}
                                                                 </div>
                                                                 {/* Size + actions */}
                                                                 <div className="flex items-center justify-between">
