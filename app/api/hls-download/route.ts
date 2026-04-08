@@ -6,7 +6,7 @@ import os from 'os';
 
 export const runtime = 'nodejs';
 
-export async function GET(request: NextRequest) {
+export async function GET(request: NextRequest): Promise<Response> {
     const url = request.nextUrl.searchParams.get('url');
     const mode = request.nextUrl.searchParams.get('mode') || 'progress';
 
