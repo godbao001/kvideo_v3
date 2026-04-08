@@ -1,6 +1,7 @@
 'use client';
 
 import { AddSourceModal } from '@/components/settings/AddSourceModal';
+import { ImportModal } from '@/components/settings/ImportModal';
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 import { PremiumSourceSettings } from '@/components/settings/PremiumSourceSettings';
 import { DisplaySettings } from '@/components/settings/DisplaySettings';
@@ -19,6 +20,10 @@ export default function PremiumSettingsPage() {
         handleSourcesChange,
         handleAddSource,
         handleRestoreDefaults,
+        handleImportFile,
+        handleImportVerified,
+        isImportModalOpen,
+        setIsImportModalOpen,
         editingSource,
         handleEditSource,
         setEditingSource,
@@ -113,6 +118,7 @@ export default function PremiumSettingsPage() {
                         setIsAddModalOpen(true);
                     }}
                     onEditSource={handleEditSource}
+                    onImport={() => setIsImportModalOpen(true)}
                 />
             </div>
 
@@ -126,6 +132,18 @@ export default function PremiumSettingsPage() {
                 onAdd={handleAddSource}
                 existingIds={premiumSources.map(s => s.id)}
                 initialValues={editingSource}
+            />
+
+            <ImportModal
+                isOpen={isImportModalOpen}
+                onClose={() => setIsImportModalOpen(false)}
+                existingSources={premiumSources}
+                onImportFile={handleImportFile}
+                onImportVerified={handleImportVerified}
+                subscriptions={[]}
+                onAddSubscription={() => Promise.resolve(true)}
+                onRemoveSubscription={() => {}}
+                onRefreshSubscription={() => Promise.resolve()}
             />
 
             <ConfirmDialog

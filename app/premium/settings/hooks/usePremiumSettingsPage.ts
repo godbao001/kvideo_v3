@@ -2,11 +2,13 @@ import { useState, useEffect } from 'react';
 import { settingsStore, getDefaultPremiumSources, type SortOption, type SearchDisplayMode, type ProxyMode, type LocaleOption } from '@/lib/store/settings-store';
 import { premiumModeSettingsStore } from '@/lib/store/premium-mode-settings';
 import type { VideoSource } from '@/lib/types';
+import { mergeSources, parseSourcesFromJson } from '@/lib/utils/source-import-utils';
 
 export function usePremiumSettingsPage() {
     const [premiumSources, setPremiumSources] = useState<VideoSource[]>([]);
     const [isAddModalOpen, setIsAddModalOpen] = useState(false);
     const [isRestoreDefaultsDialogOpen, setIsRestoreDefaultsDialogOpen] = useState(false);
+    const [isImportModalOpen, setIsImportModalOpen] = useState(false);
     const [editingSource, setEditingSource] = useState<VideoSource | null>(null);
 
     // Display settings (from premium mode settings store)
@@ -149,16 +151,42 @@ export function usePremiumSettingsPage() {
         settingsStore.saveSettings({ ...currentSettings, blockedCategories: categories });
     };
 
+    const handleImportVerified = (newSources: VideoSource[]): boolean => {
+        if (newSources.length === 0) return false;
+        const currentSettings = settingsStore.getSettings();
+        const merged = mergeSources(currentSettings.premiumSources, newSources);
+        settingsStore.saveSettings({ ...currentSettings, premiumSources: merged });
+        setPremiumSources(merged);
+        return true;
+    };
+
+    const handleImportFile = (jsonString: string): boolean => {
+        const asBackupSuccess = settingsStore.importSettings(jsonString);
+        if (asBackupSuccess) {
+            setPremiumSources(settingsStore.getSettings().premiumSources);
+            return true;
+        }
+        const result = parseSourcesFromJson(jsonString);
+        if (result.totalCount > 0) {
+            return handleImportVerified(result.premiumSources);
+        }
+        return false;
+    };
+
     return {
         premiumSources,
         isAddModalOpen,
         isRestoreDefaultsDialogOpen,
+        isImportModalOpen,
         setIsAddModalOpen,
         setIsRestoreDefaultsDialogOpen,
+        setIsImportModalOpen,
         setEditingSource,
         handleSourcesChange,
         handleAddSource,
         handleRestoreDefaults,
+        handleImportFile,
+        handleImportVerified,
         editingSource,
         handleEditSource,
         // Display settings
