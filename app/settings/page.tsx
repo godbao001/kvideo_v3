@@ -130,6 +130,7 @@ export default function SettingsPage() {
               setIsAddModalOpen(true);
             }}
             onEditSource={handleEditSource}
+            onImport={() => setIsImportModalOpen(true)}
           />
         </PermissionGate>
 

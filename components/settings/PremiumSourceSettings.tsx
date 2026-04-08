@@ -9,6 +9,7 @@ interface PremiumSourceSettingsProps {
     onRestoreDefaults: () => void;
     onAddSource: () => void;
     onEditSource?: (source: VideoSource) => void;
+    onImport?: () => void;
 }
 
 export function PremiumSourceSettings({
@@ -17,6 +18,7 @@ export function PremiumSourceSettings({
     onRestoreDefaults,
     onAddSource,
     onEditSource,
+    onImport,
 }: PremiumSourceSettingsProps) {
     const [showAllSources, setShowAllSources] = useState(false);
     const [searchQuery, setSearchQuery] = useState('');
@@ -84,6 +86,14 @@ export function PremiumSourceSettings({
                     >
                         导出
                     </button>
+                    {onImport && (
+                        <button
+                            onClick={onImport}
+                            className="px-4 py-2 rounded-[var(--radius-2xl)] bg-[var(--glass-bg)] border border-[var(--glass-border)] text-[var(--text-color)] text-sm font-medium hover:bg-[color-mix(in_srgb,var(--accent-color)_10%,transparent)] transition-all duration-200 cursor-pointer"
+                        >
+                            导入
+                        </button>
+                    )}
                 </div>
             </div>
             <p className="text-sm text-[var(--text-color-secondary)] mb-6">
