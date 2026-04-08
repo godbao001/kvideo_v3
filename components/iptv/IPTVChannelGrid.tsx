@@ -19,9 +19,11 @@ interface IPTVChannelGridProps {
   activeChannel?: M3UChannel | null;
   channelsBySource?: Record<string, { channels: M3UChannel[]; groups: string[] }>;
   sources?: IPTVSource[];
+  latencies?: Record<string, number>; // channel url -> latency in ms
+  resolvedUrls?: Set<string>; // only show channels in this set
 }
 
-export function IPTVChannelGrid({ channels, groups, onSelect, activeChannel, channelsBySource, sources }: IPTVChannelGridProps) {
+export function IPTVChannelGrid({ channels, groups, onSelect, activeChannel, channelsBySource, sources, latencies = {}, resolvedUrls }: IPTVChannelGridProps) {
   const [selectedGroup, setSelectedGroup] = useState<string | null>(null);
   const [selectedSourceId, setSelectedSourceId] = useState<string | null>(null);
   const [search, setSearch] = useState('');
@@ -42,6 +44,11 @@ export function IPTVChannelGrid({ channels, groups, onSelect, activeChannel, cha
   const filteredChannels = useMemo(() => {
     let result = effectiveChannels;
 
+    // Only show channels that have latency data (resolvedUrls = null means show all)
+    if (resolvedUrls !== null && resolvedUrls !== undefined) {
+      result = result.filter((c) => resolvedUrls.has(c.url));
+    }
+
     if (selectedGroup) {
       result = result.filter((c) => c.group === selectedGroup);
     }
@@ -52,7 +59,7 @@ export function IPTVChannelGrid({ channels, groups, onSelect, activeChannel, cha
     }
 
     return result;
-  }, [effectiveChannels, selectedGroup, search]);
+  }, [effectiveChannels, selectedGroup, search, resolvedUrls]);
 
   // Reset visible count when filter changes
   const filterKey = `${selectedSourceId}-${selectedGroup}-${search}`;
@@ -212,7 +219,7 @@ export function IPTVChannelGrid({ channels, groups, onSelect, activeChannel, cha
                 }`}>
                   {channel.name}
                 </p>
-                <div className="flex items-center gap-1">
+                <div className="flex items-center gap-1 flex-wrap">
                   {channel.group && (
                     <p className={`text-[10px] truncate ${
                       activeChannel?.url === channel.url ? 'text-white/70' : 'text-[var(--text-color-secondary)]'
@@ -225,6 +232,14 @@ export function IPTVChannelGrid({ channels, groups, onSelect, activeChannel, cha
                       activeChannel?.url === channel.url ? 'bg-white/20 text-white/80' : 'bg-[var(--accent-color)]/10 text-[var(--accent-color)]'
                     }`}>
                       {channel.routes.length}线路
+                    </span>
+                  )}
+                  {/* Latency indicator — only show when latency data is available */}
+                  {latencies[channel.url] !== undefined && (
+                    <span className={`text-[9px] px-1 rounded flex-shrink-0 ${
+                      activeChannel?.url === channel.url ? 'bg-white/20 text-white/80' : 'bg-[var(--accent-color)]/10 text-[var(--accent-color)]'
+                    }`}>
+                      {latencies[channel.url]}ms
                     </span>
                   )}
                 </div>

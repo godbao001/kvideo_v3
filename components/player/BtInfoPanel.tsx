@@ -278,7 +278,7 @@ export function BtInfoPanel({ videoTitle }: BtInfoPanelProps) {
                                     );
                                 })()}
 
-                                {downloads.length === 0 && !loading && (
+                                {downloads.length === 0 && !loading && firstResult && (
                                     <a
                                         href={firstResult.detailUrl}
                                         target="_blank"

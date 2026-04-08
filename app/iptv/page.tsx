@@ -4,8 +4,9 @@
  * IPTV Page - Live TV channel viewer with M3U source management
  */
 
-import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import { useIPTVStore } from '@/lib/store/iptv-store';
+import { useIPTVLatency } from '@/lib/hooks/useIPTVLatency';
 import { IPTVSourceManager } from '@/components/iptv/IPTVSourceManager';
 import { IPTVChannelGrid } from '@/components/iptv/IPTVChannelGrid';
 import { IPTVPlayer } from '@/components/iptv/IPTVPlayer';
@@ -15,7 +16,7 @@ import Link from 'next/link';
 import type { M3UChannel } from '@/lib/utils/m3u-parser';
 
 export default function IPTVPage() {
-  const { sources, cachedChannels, cachedChannelsBySource, refreshSources, isLoading, lastRefreshed } = useIPTVStore();
+  const { sources, cachedChannels, cachedChannelsBySource, refreshSources, isLoading } = useIPTVStore();
   const [activeChannel, setActiveChannel] = useState<M3UChannel | null>(null);
   const [showManager, setShowManager] = useState(false);
 
@@ -59,45 +60,57 @@ export default function IPTVPage() {
     );
   }
 
-  // Guard against concurrent refresh calls
-  const refreshLockRef = useRef(false);
+  // Latency measurement for IPTV channels
+  const { latencies, pendingCount, refreshAll } = useIPTVLatency({
+    channels: visibleChannels,
+    enabled: visibleChannels.length > 0,
+  });
 
-  // Auto-refresh on first load if we have sources but no cached channels
-  useEffect(() => {
-    if (sources.length > 0 && cachedChannels.length === 0 && !isLoading && !refreshLockRef.current) {
-      refreshLockRef.current = true;
-      refreshSources().finally(() => {
-        refreshLockRef.current = false;
-      });
-    }
-  }, [sources.length, cachedChannels.length, isLoading]);
+  // Once detection starts (any latency or pending > 0), only show resolved channels
+  // Before detection starts, show all channels so user can see what to check
+  const isDetecting = Object.keys(latencies).length > 0 || pendingCount > 0;
+  const resolvedUrls = useMemo(() => {
+    if (!isDetecting) return null; // null = show all
+    return new Set(Object.keys(latencies));
+  }, [latencies, isDetecting]);
 
   return (
-      <div className="min-h-screen bg-[var(--bg-color)] bg-[image:var(--bg-image)] bg-fixed">
-        <div className="container mx-auto px-4 py-8 max-w-7xl">
-          {/* Header */}
-          <div className="bg-[var(--glass-bg)] border border-[var(--glass-border)] rounded-[var(--radius-2xl)] shadow-[var(--shadow-sm)] p-6 mb-6">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-4">
-                <Link
-                  href="/"
-                  className="w-10 h-10 flex items-center justify-center rounded-[var(--radius-full)] bg-[var(--glass-bg)] border border-[var(--glass-border)] text-[var(--text-color)] hover:bg-[color-mix(in_srgb,var(--accent-color)_10%,transparent)] transition-all duration-200 cursor-pointer"
-                  aria-label="返回首页"
-                >
-                  <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
-                  </svg>
-                </Link>
-                <div>
-                  <h1 className="text-2xl font-bold text-[var(--text-color)] flex items-center gap-2">
-                    <Icons.TV size={24} className="text-[var(--accent-color)]" />
-                    直播
-                  </h1>
-                  <p className="text-sm text-[var(--text-color-secondary)]">
-                    {visibleChannels.length > 0 ? `${visibleChannels.length} 个频道` : 'IPTV 直播频道'}
-                  </p>
-                </div>
+    <div className="min-h-screen bg-[var(--bg-color)] bg-[image:var(--bg-image)] bg-fixed">
+      <div className="container mx-auto px-4 py-8 max-w-7xl">
+        {/* Header */}
+        <div className="bg-[var(--glass-bg)] border border-[var(--glass-border)] rounded-[var(--radius-2xl)] shadow-[var(--shadow-sm)] p-6 mb-6">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <Link
+                href="/"
+                className="w-10 h-10 flex items-center justify-center rounded-[var(--radius-full)] bg-[var(--glass-bg)] border border-[var(--glass-border)] text-[var(--text-color)] hover:bg-[color-mix(in_srgb,var(--accent-color)_10%,transparent)] transition-all duration-200 cursor-pointer"
+                aria-label="返回首页"
+              >
+                <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
+                </svg>
+              </Link>
+              <div>
+                <h1 className="text-2xl font-bold text-[var(--text-color)] flex items-center gap-2">
+                  <Icons.TV size={24} className="text-[var(--accent-color)]" />
+                  直播
+                </h1>
+                <p className="text-sm text-[var(--text-color-secondary)]">
+                  {visibleChannels.length > 0 ? `${visibleChannels.length} 个频道 (cached: ${cachedChannels.length})` : '暂无频道'}
+                </p>
               </div>
+            </div>
+
+            <div className="flex items-center gap-2">
+              {/* Refresh latency button */}
+              <button
+                onClick={refreshAll}
+                disabled={pendingCount > 0}
+                className="flex items-center gap-1.5 px-4 py-2 bg-[var(--glass-bg)] border border-[var(--glass-border)] rounded-[var(--radius-2xl)] text-sm text-[var(--text-color)] hover:border-[var(--accent-color)]/30 transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                <Icons.RefreshCw size={14} className={pendingCount > 0 ? 'animate-spin' : ''} />
+                {pendingCount > 0 ? `检测中 ${pendingCount}...` : '检测延迟'}
+              </button>
 
               {canManageSources && (
                 <button
@@ -110,48 +123,51 @@ export default function IPTVPage() {
               )}
             </div>
           </div>
-
-          {/* Source Manager (collapsible) */}
-          {showManager && (
-            <div className="bg-[var(--glass-bg)] border border-[var(--glass-border)] rounded-[var(--radius-2xl)] shadow-[var(--shadow-sm)] p-6 mb-6">
-              <IPTVSourceManager />
-            </div>
-          )}
-
-          {/* Loading State */}
-          {isLoading && (
-            <div className="text-center py-16">
-              <div className="w-10 h-10 border-2 border-[var(--accent-color)]/30 border-t-[var(--accent-color)] rounded-full animate-spin mx-auto mb-4" />
-              <p className="text-sm text-[var(--text-color-secondary)]">正在加载频道列表...</p>
-            </div>
-          )}
-
-          {/* Channel Grid */}
-          {!isLoading && (
-            <div className="bg-[var(--glass-bg)] border border-[var(--glass-border)] rounded-[var(--radius-2xl)] shadow-[var(--shadow-sm)] p-6">
-              <IPTVChannelGrid
-                channels={visibleChannels}
-                groups={visibleGroups}
-                onSelect={setActiveChannel}
-                activeChannel={activeChannel}
-                channelsBySource={visibleChannelsBySource}
-                sources={visibleSources}
-              />
-            </div>
-          )}
         </div>
 
-        {/* Player Overlay */}
-        {activeChannel && (
-          <IPTVPlayer
-            channel={activeChannel}
-            onClose={() => setActiveChannel(null)}
-            channels={visibleChannels}
-            onChannelChange={setActiveChannel}
-            channelsBySource={visibleChannelsBySource}
-            sources={visibleSources}
-          />
+        {/* Source Manager (collapsible) */}
+        {showManager && (
+          <div className="bg-[var(--glass-bg)] border border-[var(--glass-border)] rounded-[var(--radius-2xl)] shadow-[var(--shadow-sm)] p-6 mb-6">
+            <IPTVSourceManager />
+          </div>
+        )}
+
+        {/* Loading State */}
+        {isLoading && (
+          <div className="text-center py-16">
+            <div className="w-10 h-10 border-2 border-[var(--accent-color)]/30 border-t-[var(--accent-color)] rounded-full animate-spin mx-auto mb-4" />
+            <p className="text-sm text-[var(--text-color-secondary)]">正在加载频道列表...</p>
+          </div>
+        )}
+
+        {/* Channel Grid */}
+        {!isLoading && (
+          <div className="bg-[var(--glass-bg)] border border-[var(--glass-border)] rounded-[var(--radius-2xl)] shadow-[var(--shadow-sm)] p-6">
+            <IPTVChannelGrid
+              channels={visibleChannels}
+              groups={visibleGroups}
+              onSelect={setActiveChannel}
+              activeChannel={activeChannel}
+              channelsBySource={visibleChannelsBySource}
+              sources={visibleSources}
+              latencies={latencies}
+              resolvedUrls={resolvedUrls}
+            />
+          </div>
         )}
       </div>
+
+      {/* Player Overlay */}
+      {activeChannel && (
+        <IPTVPlayer
+          channel={activeChannel}
+          onClose={() => setActiveChannel(null)}
+          channels={visibleChannels}
+          onChannelChange={setActiveChannel}
+          channelsBySource={visibleChannelsBySource}
+          sources={visibleSources}
+        />
+      )}
+    </div>
   );
 }

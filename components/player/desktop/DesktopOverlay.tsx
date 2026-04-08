@@ -28,6 +28,7 @@ interface DesktopOverlayProps {
     onMoreMenuMouseEnter: () => void;
     onMoreMenuMouseLeave: () => void;
     onCopyLink: (type?: 'original' | 'proxy') => void;
+    onDownload: () => void;
     // Speed Menu Props
     playbackRate: number;
     showSpeedMenu: boolean;
@@ -66,6 +67,7 @@ export function DesktopOverlay({
     onMoreMenuMouseEnter,
     onMoreMenuMouseLeave,
     onCopyLink,
+    onDownload,
     playbackRate,
     showSpeedMenu,
     speeds,
@@ -92,6 +94,7 @@ export function DesktopOverlay({
                     onMouseEnter={onMoreMenuMouseEnter}
                     onMouseLeave={onMoreMenuMouseLeave}
                     onCopyLink={onCopyLink}
+                    onDownload={onDownload}
                     webFullscreenSize={webFullscreenSize}
                     onCycleWebFullscreenSize={onCycleWebFullscreenSize}
                     containerRef={containerRef}

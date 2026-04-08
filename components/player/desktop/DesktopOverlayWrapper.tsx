@@ -18,6 +18,7 @@ interface DesktopOverlayWrapperProps {
     onMoreMenuMouseEnter: () => void;
     onMoreMenuMouseLeave: () => void;
     onCopyLink: (type?: 'original' | 'proxy') => void;
+    onDownload: () => void;
     // Speed Menu Props
     playbackRate: number;
     showSpeedMenu: boolean;
@@ -47,6 +48,7 @@ export function DesktopOverlayWrapper({
     onMoreMenuMouseEnter,
     onMoreMenuMouseLeave,
     onCopyLink,
+    onDownload,
     playbackRate,
     showSpeedMenu,
     speeds,
@@ -96,6 +98,7 @@ export function DesktopOverlayWrapper({
             onMoreMenuMouseEnter={onMoreMenuMouseEnter}
             onMoreMenuMouseLeave={onMoreMenuMouseLeave}
             onCopyLink={onCopyLink}
+            onDownload={onDownload}
             playbackRate={playbackRate}
             showSpeedMenu={showSpeedMenu}
             speeds={speeds}

@@ -1,4 +1,4 @@
-version: '3'
+version: '3.8'
 
 services:
   kvideo:
@@ -6,8 +6,19 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    restart: always
+    restart: unless-stopped
     ports:
-      - 3000:3000
+      - "3001:3000"       # 映射到宿主机 3001
     environment:
       - NODE_ENV=production
+      - PORT=3000
+    volumes:
+      # 数据持久化（可选，取消注释即可使用）
+      # - ./data:/app/data
+      # - ./logs:/app/logs
+    networks:
+      - kvideo-network
+
+networks:
+  kvideo-network:
+    driver: bridge

@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useMemo, useCallback } from 'react';
 import { usePlaybackControls } from './desktop/usePlaybackControls';
 import { useVolumeControls } from './desktop/useVolumeControls';
 import { useProgressControls } from './desktop/useProgressControls';
@@ -137,6 +137,47 @@ export function useDesktopPlayerLogic({
         src, setToastMessage, setShowToast, toastTimeoutRef
     });
 
+    // Download handler
+    const handleDownload = useCallback(() => {
+        // Get original URL (strip proxy if present)
+        let originalUrl = src;
+        if (src.includes('/api/proxy?url=')) {
+            const match = src.match(/url=([^&]*)/);
+            if (match && match[1]) {
+                originalUrl = decodeURIComponent(match[1]);
+            }
+        }
+
+        // Check if it's an HLS stream
+        const isHls = originalUrl.includes('.m3u8') || 
+            originalUrl.includes('m3u8');
+
+        if (isHls) {
+            // HLS: open download progress page
+            const downloadUrl = `/download?url=${encodeURIComponent(src)}`;
+            window.open(downloadUrl, '_blank');
+            return;
+        }
+
+        // For direct video files, trigger download
+        const a = document.createElement('a');
+        a.href = originalUrl;
+        // Extract filename from URL or generate one
+        const urlParts = originalUrl.split('/');
+        const lastPart = urlParts[urlParts.length - 1];
+        const hasExtension = lastPart.includes('.') && 
+            (lastPart.endsWith('.mp4') || lastPart.endsWith('.mkv') || 
+             lastPart.endsWith('.webm') || lastPart.endsWith('.avi') ||
+             lastPart.endsWith('.mov') || lastPart.endsWith('.flv'));
+        a.download = hasExtension ? lastPart : `video_${Date.now()}.mp4`;
+        a.target = '_blank';
+        a.rel = 'noopener noreferrer';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        utilities.showToastNotification('开始下载视频');
+    }, [src, utilities]);
+
     const castControls = useCastControls({
         src, videoRef, setIsCastAvailable, setIsCasting
     });
@@ -184,6 +225,7 @@ export function useDesktopPlayerLogic({
             const urlToCopy = getCopyUrl(src, type);
             utilities.handleCopyLink(urlToCopy);
         },
+        handleDownload,
         startSpeedMenuTimeout: controlsVisibility.startSpeedMenuTimeout,
         clearSpeedMenuTimeout: controlsVisibility.clearSpeedMenuTimeout,
         formatTime: playbackControls.formatTime

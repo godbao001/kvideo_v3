@@ -335,6 +335,7 @@ export function DesktopVideoPlayer({
               }, 800); // Increased timeout for better stability
             }}
             onCopyLink={logic.handleCopyLink}
+            onDownload={logic.handleDownload}
             // Speed Menu Props
             playbackRate={data.playbackRate}
             showSpeedMenu={data.showSpeedMenu}
